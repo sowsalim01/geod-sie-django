@@ -77,11 +77,11 @@ WSGI_APPLICATION = 'geodetic_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'geod',
-        'USER': 'postgres',
-        'PASSWORD': 'Mamadou281201',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': '',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
+        'PORT': '',
     }
 }
 
