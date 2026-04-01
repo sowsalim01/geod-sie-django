@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte des Points Géodésiques</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'geodetic_app/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'geodetic_app/css/animations.css' %}">
+</head>
+<body>
+    <div class="container">
+        <!-- Panneau de filtres -->
+        <div class="filters-panel">
+            <h2>Filtres</h2>
+            <div class="stats">
+                <p>Total: <strong>{{ total_points }}</strong> points</p>
+                {% if filters_applied %}
+                    <p class="filter-active">Filtres actifs</p>
+                {% endif %}
+            </div>
+            
+            <form id="filter-form" method="get">
+                <div class="filter-group">
+                    <label for="localite">Localité:</label>
+                    <select name="localite" id="localite">
+                        <option value="">Toutes</option>
+                        {% for localite in localites %}
+                            <option value="{{ localite }}" {% if request.GET.localite == localite %}selected{% endif %}>
+                                {{ localite }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="altitude_min">Altitude min (m):</label>
+                    <input type="number" name="altitude_min" id="altitude_min" 
+                           value="{{ request.GET.altitude_min }}" step="10">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="altitude_max">Altitude max (m):</label>
+                    <input type="number" name="altitude_max" id="altitude_max" 
+                           value="{{ request.GET.altitude_max }}" step="10">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="ordre">Ordre:</label>
+                    <select name="ordre" id="ordre">
+                        <option value="">Tous</option>
+                        {% for ordre in ordres %}
+                            <option value="{{ ordre }}" {% if request.GET.ordre|stringformat:"s" == ordre|stringformat:"s" %}selected{% endif %}>
+                                {{ ordre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-buttons">
+                    <button type="submit" class="btn btn-primary">Appliquer</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">Réinitialiser</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Carte -->
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Données GeoJSON des points
+        const pointsData = {{ points_geojson|safe }};
+        
+        // Initialisation de la carte
+        const map = L.map('map').setView([46.5, 2.5], 6); // Centré sur la France
+        
+        // Couche de fond (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+        
+        // Style des marqueurs
+        function getMarkerColor(altitude) {
+            if (!altitude) return '#3498db';
+            if (altitude < 200) return '#2ecc71';
+            if (altitude < 500) return '#f1c40f';
+            if (altitude < 1000) return '#e67e22';
+            return '#e74c3c';
+        }
+        
+        // Créer une icône personnalisée
+        function createCustomIcon(altitude) {
+            const color = getMarkerColor(altitude);
+            return L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
+                iconSize: [16, 16],
+                popupAnchor: [0, -8]
+            });
+        }
+        
+        // Ajouter les points sur la carte
+        const markers = [];
+        
+        pointsData.features.forEach(feature => {
+            const coords = feature.geometry.coordinates;
+            const props = feature.properties;
+            
+            // Inverser les coordonnées (Leaflet utilise [lat, lng])
+            const marker = L.marker([coords[1], coords[0]], {
+                icon: createCustomIcon(props.altitude)
+            });
+            
+            // Créer le contenu du popup
+            let popupContent = `
+                <div class="popup-content">
+                    <h3>${props.nom || 'Point sans nom'}</h3>
+                    <p><strong>ID:</strong> ${props.id}</p>
+                    <p><strong>Localité:</strong> ${props.localite || 'Non spécifiée'}</p>
+                    <p><strong>Altitude:</strong> ${props.altitude ? props.altitude + ' m' : 'Non spécifiée'}</p>
+                    <p><strong>Coordonnées:</strong><br>
+                    Est: ${props.est || 'N/A'}<br>
+                    Nord: ${props.nord || 'N/A'}</p>
+                    <p><strong>Ordre:</strong> ${props.ordre || 'N/A'}</p>
+            `;
+            
+            if (props.photo) {
+                popupContent += `<p><strong>Photo:</strong> ${props.photo}</p>`;
+            }
+            
+            popupContent += `</div>`;
+            
+            marker.bindPopup(popupContent);
+            marker.addTo(map);
+            markers.push(marker);
+        });
+        
+        // Ajuster la vue pour montrer tous les points
+        if (pointsData.features.length > 0) {
+            const bounds = L.latLngBounds();
+            pointsData.features.forEach(feature => {
+                const coords = feature.geometry.coordinates;
+                bounds.extend([coords[1], coords[0]]);
+            });
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+        
+        // Fonction pour réinitialiser les filtres
+        function resetFilters() {
+            window.location.href = window.location.pathname;
+        }
+        
+        // Fonction pour mettre à jour la carte via AJAX (optionnel)
+        function updateMapWithFilters() {
+            const form = document.getElementById('filter-form');
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            
+            fetch(`${window.location.pathname}?${params.toString()}`)
+                .then(response => response.text())
+                .then(html => {
+                    // Recharger la page avec les nouveaux filtres
+                    window.location.href = `${window.location.pathname}?${params.toString()}`;
+                });
+        }
+        
+        // Ajouter un événement de soumission du formulaire en AJAX (optionnel)
+        document.getElementById('filter-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            updateMapWithFilters();
+        });
+        
+        // Ajouter une légende
+        const legend = L.control({ position: 'bottomright' });
+        
+        legend.onAdd = function(map) {
+            const div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML = `
+                <h4>Altitude</h4>
+                <div><span style="background:#2ecc71"></span> < 200 m</div>
+                <div><span style="background:#f1c40f"></span> 200-500 m</div>
+                <div><span style="background:#e67e22"></span> 500-1000 m</div>
+                <div><span style="background:#e74c3c"></span> > 1000 m</div>
+            `;
+            return div;
+        };
+        
+        legend.addTo(map);
+        
+        // Afficher le nombre de points dans la console
+        console.log(`${pointsData.features.length} points affichés sur la carte`);
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+# Fichiers de base Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Fichiers de l'environnement virtuel
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Fichiers de cache Django
+*.cache
+*.tmp
+
+# Fichiers de compilation Python
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Fichiers IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Fichiers système
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Fichiers spécifiques à GeoDjango
+*.shp
+*.shx
+*.dbf
+*.prj
+*.qpj
+*.cpg
+*.sbx
+*.sbn
+*.xml
+*.tif
+*.tiff
+
+# Fichiers de configuration sensibles
+.env
+.venv
+.env.local
+.env.production
+config.py
+secrets.json
+
+# Fichiers de médias et statiques collectés
+/media/
+/staticfiles/
+/static_root/
+
+# Fichiers de couverture de test
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Documentation
+docs/_build/
+
+# Fichiers spécifiques à Windows
+*.exe
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Fichiers de backup et de migration
+*.bak
+*.backup
+*.sql
+*.dump
+
+# Fichiers temporaires
+*.temp
+*.tmp
+*.tempfile
+
+# Logs spécifiques
+error.log
+access.log
+debug.log
+
+# Fichiers de base de données PostgreSQL (si utilisés)
+*.dump
+*.sql
+
+# Fichiers de configuration QGIS (si utilisés)
+*.qgs
+*.qgz
+
+# Fichiers de données géospatiales temporaires
+geodata/
+data/
+datasets/
